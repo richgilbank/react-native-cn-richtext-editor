@@ -1,8 +1,12 @@
 import React, { Component } from 'react';
 import {
-  TextInput, View, Image,
-  ScrollView, Platform,
+  TextInput,
+  View,
+  Image,
+  ScrollView,
+  Platform,
   TouchableWithoutFeedback,
+  Text,
 } from 'react-native';
 import _ from 'lodash';
 import update from 'immutability-helper';
@@ -126,8 +130,7 @@ class CNRichTextEditor extends Component {
     onConnectToPrevClicked = (index) => {
       const { value } = this.props;
 
-      if (index > 0 && value[index - 1].component == 'image'
-      ) {
+      if (['image', 'inputBlock'].includes(index > 0 && value[index - 1].component)) {
         const ref = this.textInputs[index - 1];
         ref.focus();
       }
@@ -139,7 +142,8 @@ class CNRichTextEditor extends Component {
       const { value } = this.props;
 
       const item = value[index];
-      if (item.component === 'image' && e.nativeEvent.key === 'Backspace') {
+      console.log('here', item.component, e.nativeEvent.key)
+      if (['image', 'inputBlock'].includes(item.component) && e.nativeEvent.key === 'Backspace') {
         if (this.state.imageHighLightedInex === index) {
           this.removeImage(index);
         } else {
@@ -204,23 +208,26 @@ class CNRichTextEditor extends Component {
     }
 
     addImageContent = (url, id, height, width) => {
-      const { focusInputIndex } = this.state;
-      const { value } = this.props;
-      let index = focusInputIndex + 1;
-
-      const myHeight = (this.state.layoutWidth - 4 < width) ? height * ((this.state.layoutWidth - 4) / width) : height;
-      this.contentHeights[index] = myHeight + 4;
-
       const item = {
         id: shortid.generate(),
         imageId: id,
         component: 'image',
         url,
         size: {
-          height,
           width,
+          height,
         },
       };
+      return this.addBlockContent(item, width, height);
+    }
+
+    addBlockContent = (item, width, height) => {
+      const { focusInputIndex } = this.state;
+      const { value } = this.props;
+      let index = focusInputIndex + 1;
+
+      const myHeight = (this.state.layoutWidth - 4 < width) ? height * ((this.state.layoutWidth - 4) / width) : height;
+      this.contentHeights[index] = myHeight + 4;
 
       let newConents = value;
       if (newConents[index - 1].component === 'text') {
@@ -286,12 +293,21 @@ class CNRichTextEditor extends Component {
       }
     }
 
+  insertInput(type) {
+    const item = {
+      id: shortid.generate(),
+      component: 'inputBlock',
+      type,
+    };
+    this.addBlockContent(item);
+  }
+
     removeImage =(index) => {
       const { value } = this.props;
       const content = value[index];
 
 
-      if (content.component === 'image') {
+      if (content.component === 'image' || content.component === 'inputBlock') {
         let newConents = value;
         const removedUrl = content.url;
         const removedId = content.imageId;
@@ -432,6 +448,21 @@ class CNRichTextEditor extends Component {
       );
     }
 
+    renderInputBlock(item, index) {
+      return (
+        <TouchableWithoutFeedback
+          key={`${item.component}${item.id}`}
+          onPress={() => this.removeImage(index)}
+        >
+          <View
+            style={{borderColor: '#eee', borderWidth: 5, borderStyle: 'dashed', borderRadius: 5, padding: 10}}
+          >
+            <Text style={{fontWeight: 'bold'}}>Your age</Text>
+          </View>
+        </TouchableWithoutFeedback>
+      );
+    }
+
     renderImage(image, index) {
       const { width, height } = image.size;
       const myHeight = (this.state.layoutWidth - 4 < width) ? height * ((this.state.layoutWidth - 4) / width) : height;
@@ -485,7 +516,7 @@ class CNRichTextEditor extends Component {
 
       if (toolType === 'body' || toolType === 'title' || toolType === 'heading' || toolType === 'ul' || toolType === 'ol') {
         this.textInputs[focusInputIndex].applyTag(toolType);
-      } else if (toolType == 'image') {
+      } else if (toolType == 'image' || toolType == 'inputBlock') {
         // convertToHtmlStringconvertToHtmlString(this.state.contents);
 
         this.setState({ showAddImageModal: true });
@@ -576,6 +607,9 @@ class CNRichTextEditor extends Component {
                             return (
                               this.renderImage(item, index)
                             );
+                          }
+                          if (item.component === 'inputBlock') {
+                            return this.renderInputBlock(item, index);
                           }
                         })
                     }

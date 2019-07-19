@@ -130,6 +130,10 @@ export function convertToHtmlString(contents, styleList = null) {
         element.setAttribute('data-id', input.imageId);
       }
       myDoc.documentElement.appendChild(element);
+    } else if (input.component === 'inputBlock') {
+      element = myDoc.createElement('input-block');
+      element.setAttribute('data-id', input.id);
+      myDoc.documentElement.appendChild(element);
     }
   }
 
@@ -159,6 +163,9 @@ export function convertToObject(htmlString, styleList = null) {
         break;
       case 'img':
         tag = 'image';
+        break;
+      case 'input-block':
+        tag = 'inputBlock';
         break;
       case 'ul':
         tag = 'ul';
