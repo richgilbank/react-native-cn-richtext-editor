@@ -142,7 +142,6 @@ class CNRichTextEditor extends Component {
       const { value } = this.props;
 
       const item = value[index];
-      console.log('here', item.component, e.nativeEvent.key)
       if (['image', 'inputBlock'].includes(item.component) && e.nativeEvent.key === 'Backspace') {
         if (this.state.imageHighLightedInex === index) {
           this.removeImage(index);
@@ -293,11 +292,12 @@ class CNRichTextEditor extends Component {
       }
     }
 
-  insertInput(type) {
+  insertInput(type, label) {
     const item = {
       id: shortid.generate(),
       component: 'inputBlock',
       type,
+      label,
     };
     this.addBlockContent(item);
   }
@@ -452,12 +452,31 @@ class CNRichTextEditor extends Component {
       return (
         <TouchableWithoutFeedback
           key={`${item.component}${item.id}`}
-          onPress={() => this.removeImage(index)}
         >
-          <View
-            style={{borderColor: '#eee', borderWidth: 5, borderStyle: 'dashed', borderRadius: 5, padding: 10}}
-          >
-            <Text style={{fontWeight: 'bold'}}>Your age</Text>
+          <View style={{flexDirection: 'row'}}>
+            <View
+              style={{
+                borderColor: '#eee',
+                borderWidth: 5,
+                borderStyle: 'dashed',
+                borderRadius: 5,
+                padding: 10,
+                marginVertical: 10,
+                backgroundColor: this.state.imageHighLightedInex === index ? '#ccc' : '#fff',
+              }}
+            >
+              <Text style={{fontWeight: 'bold'}}>{item.label}</Text>
+            </View>
+            <TextInput
+              onKeyPress={event => this.handleKeyDown(event, index)}
+              style={{
+                width: 1,
+                paddingBottom: 1,
+                borderWidth: 0,
+              }}
+              multiline={false}
+              ref={component => this.textInputs[index] = component}
+            />
           </View>
         </TouchableWithoutFeedback>
       );
